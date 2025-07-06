@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title> Fun Snake Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #000 60%, #00eaff 100%);
+      font-family: Segoe UI, Arial, sans-serif;
+      color: #00eaff;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 32px;
+    }
+    canvas {
+      background: #111;
+      box-shadow: 0 4px 32px 0 #00eaff33;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .controls, .info {
+      margin: 10px 0;
+      color: #00eaff;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+    .controls label {
+      font-size: 1rem;
+      color: #00eaff;
+    }
+    .controls input[type="number"], .controls input[type="range"] {
+      margin-left: 6px;
+      width: 50px;
+    }
+    .controls button {
+      background: #111;
+      border: 2px solid #00eaff;
+      color: #00eaff;
+      border-radius: 8px;
+      padding: 4px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 10px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .controls button:hover {
+      background: #00eaff;
+      color: #111;
+    }
+    .info {
+      color: #fff;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .game-over {
+      color: #ff3860;
+      font-weight: bold;
+      margin-left: 12px;
+    }
+    @media (max-width: 600px) {
+      canvas { width: 98vw !important; height: auto !important; }
+      .container { padding-top: 10px; }
+      .controls label { font-size: 0.95em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🐍 Fun Snake Game</h2>
+    <div class="controls">
+      <label>
+        Speed:
+        <input id="speed" type="range" min="50" max="500" value="150" step="10">
+        <span id="speedVal">6.7</span> moves/sec
+      </label>
+      <label>
+        Fruits:
+        <input id="fruits" type="number" min="1" max="8" value="1">
+      </label>
+      <label>
+        Rows:
+        <input id="rows" type="number" min="8" max="30" value="15">
+      </label>
+      <label>
+        Columns:
+        <input id="cols" type="number" min="8" max="30" value="15">
+      </label>
+      <button id="restart">Restart</button>
+    </div>
+    <div class="info" id="info"></div>
+    <canvas id="game" width="440" height="440" tabindex="1"></canvas>
+    <div style="color:#aaa;font-size:14px;text-align:center">
+      Use arrow keys or wasd to control the snake.<br>
+      Change settings and press restart to apply.
+    </div>
+  </div>
+  <script>
+   
+    const speedInput = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    speedVal.textContent = (1000/parseInt(speedInput.value)).toFixed(1);
+
+    speedInput.addEventListener('input', () => {
+      speedVal.textContent = (1000/parseInt(speedInput.value)).toFixed(1);
+    });
+
+   
+    let rows = 15, cols = 15, cellSize = 28;
+    let speed = 150, fruitCount = 1;
+    let snake, dir, fruits, score, gameOver, intervalId;
+    let nextDir;
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const info = document.getElementById('info');
+
+    function resetGame() {
+      rows = parseInt(document.getElementById('rows').value);
+      cols = parseInt(document.getElementById('cols').value);
+      speed = parseInt(speedInput.value);
+      fruitCount = parseInt(document.getElementById('fruits').value);
+      cellSize = Math.min(Math.floor(420 / Math.max(rows, cols)), 32);
+      canvas.width = cols * cellSize;
+      canvas.height = rows * cellSize;
+      snake = [[Math.floor(rows/2), Math.floor(cols/2)]];
+      dir = [0,1];
+      nextDir = [0,1];
+      fruits = [];
+      score = 0;
+      gameOver = false;
+      info.innerHTML = "Score: 0";
+      
+      for(let i=0;i<fruitCount;++i) fruits.push(randPos());
+      clearInterval(intervalId);
+      intervalId = setInterval(gameLoop, speed);
+    }
+    function randPos() {
+      let pos;
+      do {
+        pos = [Math.floor(Math.random()*rows), Math.floor(Math.random()*cols)];
+      } while (snake.some(([x,y])=>x===pos[0]&&y===pos[1]) || fruits.some(([x,y])=>x===pos[0]&&y===pos[1]));
+      return pos;
+    }
+    function gameLoop() {
+      if(gameOver) return;
+      
+      dir = nextDir.slice();
+      const head = [snake[0][0]+dir[0], snake[0][1]+dir[1]];
+     
+      if(head[0]<0 || head[1]<0 || head[0]>=rows || head[1]>=cols
+        || snake.some(([x,y])=>x===head[0]&&y===head[1])) {
+        gameOver = true;
+        info.innerHTML = `Score: ${score}<span class="game-over">Game Over!</span>`;
+        clearInterval(intervalId);
+        draw();
+        return;
+      }
+     
+      let ate = false;
+      for(let i=0;i<fruits.length;i++) {
+        if(fruits[i][0]===head[0] && fruits[i][1]===head[1]) {
+          fruits[i]=randPos();
+          score++;
+          ate = true;
+        }
+      }
+      snake.unshift(head);
+      if(!ate) snake.pop();
+      info.innerHTML = `Score: ${score}`;
+      draw();
+    }
+    function draw() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+     
+      for(const [fx,fy] of fruits) {
+        ctx.fillStyle="#ff0";
+        ctx.beginPath();
+        ctx.arc(fy*cellSize+cellSize/2, fx*cellSize+cellSize/2, cellSize*0.35, 0, 2*Math.PI);
+        ctx.shadowColor="#ff0";
+        ctx.shadowBlur=8;
+        ctx.fill();
+        ctx.shadowBlur=0;
+      }
+    
+      for(let i=snake.length-1;i>=0;--i) {
+        const [x,y]=snake[i];
+        ctx.fillStyle = i===0 ? "#00eaff" : "#222";
+        ctx.beginPath();
+        ctx.roundRect(y*cellSize+2, x*cellSize+2, cellSize-4, cellSize-4, 6);
+        ctx.shadowColor = i===0 ? "#00eaff" : "#222";
+        ctx.shadowBlur = i===0 ? 7 : 0;
+        ctx.fill();
+        ctx.shadowBlur=0;
+      }
+    }
+
+
+    document.addEventListener('keydown', e=>{
+      if(gameOver) return;
+      let d;
+      if(e.key==="ArrowUp"||e.key==="w") d=[-1,0];
+      else if(e.key==="ArrowDown"||e.key==="s") d=[1,0];
+      else if(e.key==="ArrowLeft"||e.key==="a") d=[0,-1];
+      else if(e.key==="ArrowRight"||e.key==="d") d=[0,1];
+      else return;
+     
+      if(snake.length>1 && d[0]===-dir[0] && d[1]===-dir[1]) return;
+      nextDir = d;
+    });
+    document.getElementById('restart').onclick = resetGame;
+
+   
+    window.addEventListener('resize', ()=>{
+      cellSize = Math.min(Math.floor(420 / Math.max(rows, cols)), 32);
+      canvas.width = cols * cellSize;
+      canvas.height = rows * cellSize;
+      draw();
+    });
+
+   
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+        this.beginPath();
+        this.moveTo(x+r, y);
+        this.arcTo(x+w, y, x+w, y+h, r);
+        this.arcTo(x+w, y+h, x, y+h, r);
+        this.arcTo(x, y+h, x, y, r);
+        this.arcTo(x, y, x+w, y, r);
+        this.closePath();
+      };
+    }
+
+  
+    resetGame();
+  </script>
+</body>
+</html>
