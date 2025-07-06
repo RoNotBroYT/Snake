@@ -98,14 +98,14 @@
       <button id="restart">Restart</button>
     </div>
     <div class="info" id="info"></div>
-    <canvas id="game" width="440" height="440" tabindex="1"></canvas>
+    <canvas id="game" width="420" height="420" tabindex="1"></canvas>
     <div style="color:#aaa;font-size:14px;text-align:center">
       Use arrow keys or wasd to control the snake.<br>
       Change settings and press restart to apply.
     </div>
   </div>
   <script>
-   
+    
     const speedInput = document.getElementById('speed');
     const speedVal = document.getElementById('speedVal');
     speedVal.textContent = (1000/parseInt(speedInput.value)).toFixed(1);
@@ -140,7 +140,7 @@
       applesEaten = 0;
       gameOver = false;
       info.innerHTML = "Score: 0 | Speed: " + (1000/getCurrentSpeed()).toFixed(1) + " moves/sec";
-     
+      
       for(let i=0;i<fruitCount;++i) fruits.push(randPos());
       clearInterval(intervalId);
       intervalId = setInterval(gameLoop, getCurrentSpeed());
@@ -154,7 +154,6 @@
       return pos;
     }
     function getCurrentSpeed() {
-      :
       let baseMovesSec = 1000/baseSpeed;
       let addMovesSec = Math.floor(applesEaten/2)*0.1;
       let totalMovesSec = baseMovesSec + addMovesSec;
@@ -167,7 +166,7 @@
     }
     function gameLoop() {
       if(gameOver) return;
-     
+      
       dir = nextDir.slice();
       const head = [snake[0][0]+dir[0], snake[0][1]+dir[1]];
       
@@ -179,7 +178,7 @@
         draw();
         return;
       }
-     
+      
       let ate = false;
       for(let i=0;i<fruits.length;i++) {
         if(fruits[i][0]===head[0] && fruits[i][1]===head[1]) {
@@ -198,6 +197,7 @@
       }
       draw();
     }
+
     function draw() {
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -219,7 +219,7 @@
       }
       ctx.restore();
 
-     
+      
       for(const [fx,fy] of fruits) {
         ctx.fillStyle="#ff0";
         ctx.beginPath();
@@ -229,7 +229,7 @@
         ctx.fill();
         ctx.shadowBlur=0;
       }
-      
+     
       for(let i=snake.length-1;i>=0;--i) {
         const [x,y]=snake[i];
         ctx.fillStyle = i===0 ? "#00eaff" : "#222";
@@ -257,7 +257,7 @@
     });
     document.getElementById('restart').onclick = resetGame;
 
-    
+   
     window.addEventListener('resize', ()=>{
       cellSize = Math.min(Math.floor(420 / Math.max(rows, cols)), 32);
       canvas.width = cols * cellSize;
@@ -280,9 +280,7 @@
 
     
     resetGame();
+    draw();
   </script>
 </body>
 </html>
-    
-      
-  
