@@ -127,7 +127,7 @@
     function resetGame() {
       rows = parseInt(document.getElementById('rows').value);
       cols = parseInt(document.getElementById('cols').value);
-      baseSpeed = parseInt(speedInput.value); // initial speed in ms
+      baseSpeed = parseInt(speedInput.value); 
       fruitCount = parseInt(document.getElementById('fruits').value);
       cellSize = Math.min(Math.floor(420 / Math.max(rows, cols)), 32);
       canvas.width = cols * cellSize;
